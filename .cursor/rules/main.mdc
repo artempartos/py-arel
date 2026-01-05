@@ -1,0 +1,108 @@
+---
+alwaysApply: true
+---
+
+# Arel Python Test Porting Rules
+
+## Test Porting Workflow
+
+When working on test porting from Ruby to Python:
+
+1. **Check Test Coverage Document**
+   - Always refer to `ai/09_test_coverage.md` for the complete test plan
+   - This document contains all tests from Ruby, grouped by file
+   - Tests are marked with ✅ (done) or ❌ (not done)
+
+2. **Test Implementation Process**
+   - Work through test files **top to bottom** as listed in `09_test_coverage.md`
+   - For each test file section:
+     a. Check if the test already exists in the corresponding Python test file
+     b. If test exists and works correctly → mark it as ✅ in `09_test_coverage.md`
+     c. If test doesn't exist → port it exactly as written in Ruby
+
+3. **Porting Tests from Ruby**
+   - Read the original Ruby test from `ruby/test/` directory
+   - Port the test **exactly** as it's written in Ruby
+   - Maintain the same test structure, assertions, and logic
+   - Use Python testing conventions (pytest) but keep Ruby test semantics
+
+4. **Using Helper Functions**
+   - Always use `must_be_like()` from `tests/helper.py` for SQL string comparisons
+   - This helper normalizes whitespace (like Ruby's `must_be_like`)
+   - Replace any existing SQL string comparisons with `must_be_like()`
+   - Import from `tests.python.helper` (for compatibility) or `tests.helper`:
+     ```python
+     from tests.python.helper import MockEngine, must_be_like
+     # or
+     from tests.helper import MockEngine, must_be_like
+
+     must_be_like(query.to_sql(), "SELECT * FROM users")
+     ```
+
+5. **Code Implementation**
+   - When implementing any code (not just tests), **always check the original Ruby implementation**
+   - Look at the Ruby source code in `arel/` or `ruby/arel/` directories
+   - Understand the Ruby implementation before porting to Python
+   - Maintain the same behavior and API as Ruby version
+
+6. **Documentation Reference**
+   - Check documentation in `ai/` directory when needed:
+     - `01_architecture_overview.md` - Overall architecture
+     - `02_classes_documentation.md` - Class documentation
+     - `03_visitors_documentation.md` - Visitor pattern docs
+     - `04_mixins_documentation.md` - Mixin documentation
+     - `05_python_implementation_plan.md` - Implementation plan
+     - `06_challenges_and_solutions.md` - Known challenges
+     - `07_class_reference.md` - Class reference
+     - `08_testing_strategy.md` - Testing strategy
+
+7. **Test File Structure**
+   - Python test files are in `tests/` directory
+   - Match the structure of Ruby tests in `ruby/test/`
+   - Use pytest fixtures for setup/teardown (similar to Ruby's `before`/`after`)
+   - Use `MockEngine` from `tests.helper` for test setup
+
+8. **Updating Test Coverage**
+   - After implementing a test, update `ai/09_test_coverage.md`
+   - Change ❌ to ✅ for completed tests
+   - Keep the document synchronized with actual test implementation
+
+9. **Testing After Changes**
+   - **ALWAYS** run tests in Docker after creating or modifying test files
+   - Testing workflow:
+     a. **First**: Run tests for the specific file you just worked on:
+        ```bash
+        # For a test file in tests/ directory
+        docker-compose run --rm py-arel pytest tests/test_table.py -v
+
+        # For a test file in tests/attributes/ directory
+        docker-compose run --rm py-arel pytest tests/attributes/test_attribute.py -v
+
+        # Or using Makefile (if FILE variable is set correctly)
+        make test-file FILE=test_table.py
+        ```
+     b. **Then**: Run all tests to ensure nothing broke:
+        ```bash
+        docker-compose run --rm py-arel pytest tests/ -v
+        # Or using Makefile
+        make test
+        ```
+   - **Never skip this step** - it's critical to catch issues early
+   - If tests fail, fix the issues before moving to the next test
+   - Only mark tests as ✅ in `09_test_coverage.md` after they pass in Docker
+
+10. **Reporting Issues**
+   - If you encounter problems during porting:
+     - Document the issue clearly
+     - Check if similar issues exist in `06_challenges_and_solutions.md`
+     - Report the problem with context (which test, what error, etc.)
+
+## Key Principles
+
+- **Exact Porting**: Port tests exactly as they are in Ruby, don't simplify or change logic
+- **Reference Original**: Always look at Ruby implementation when writing code
+- **Use Helpers**: Use `must_be_like()` for all SQL comparisons
+- **Top-Down**: Work through tests in order from the coverage document
+- **Update Progress**: Keep `09_test_coverage.md` updated as you work
+- **Test in Docker**: Always run tests in Docker after changes - first the specific file, then all tests
+

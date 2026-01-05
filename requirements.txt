@@ -1,0 +1,4 @@
+# Minimal dependencies for testing
+pytest>=7.0.0
+PyYAML>=6.0.0
+
